@@ -1,0 +1,159 @@
+#!/bin/sh
+#Author : Sakir Beg
+#Copyright (c) LazieDev
+#Script that installs programs automatically.
+COLUMNS=$(tput cols) 
+title="AutoApp Installer v1.0" 
+printf "%*s\n" $(((${#title}+$COLUMNS)/2)) "$title"
+printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
+#Variable to check privellege of the user
+flag=0
+setup=0
+location="default"
+userinput="y"
+fname="folder"
+folder="bin"
+extension="zip"
+fileext="zip"
+appname="app"
+filepath="path"
+lenfname=0
+#echo $flag
+accesspkg()
+{
+	echo "Drag and Drop the file you want to install" ;
+	read filename
+	#Removing Quotes From the file name.
+	filename=`echo "$filename" | cut -c 2-`
+	#Extracting path of the file.
+	filepath=`echo "$filename" | rev | cut -c 2- | rev`  
+	#Extracting only the filename.
+	filename=`echo "$filepath" | rev | cut -d / -f1 | rev`
+	echo path of the selected \file is $filepath
+	echo filename is $filename
+	lenfname=${#filename}
+	echo Number of char \in filename are\: $lenfname.
+	lenfname=$(($lenfname + 2))
+	#Path of the file
+	filepath=`echo "$filepath" | rev | cut -c $lenfname- | rev`
+	echo filepath = $filepath
+	echo $filename > finame
+	extension=`<finame rev | cut -d '.' -f1 | rev`
+	if [ "$extension" = "gz" ] ; then
+ 	fname=`echo "$filename" | rev | cut -c 8- | rev`
+	extension="tar.gz"
+	elif [ "$extension" = "bz2" ] ; then
+	fname=`echo "$filename" | rev | cut -c 9- | rev`
+	extension="tar.bz2"
+	else
+	fname=`echo "$filename" | rev | cut -c 5- | rev`
+	fi
+	rm finame
+	echo \filename is $fname with extension $extension
+	printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
+	echo Folder will be created in /opt directory with name $fname ;
+}
+makedir()
+{
+	mkdir /opt/$fname
+	echo Program will be installed in /opt/$fname folder. ;
+}
+copypkg()
+{	
+	cp $filepath/$filename /opt/$fname
+	echo Program \file $filename is copied to /opt/$fname. ;
+	printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
+}
+unzippkg()
+{	
+	cd /opt/$fname
+	printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
+	echo "Extracting..."
+	while :
+	do
+    		case $extension in
+		zip)
+		echo "It is a zip file."
+		unzip $filename 
+		break
+		;;
+		deb)
+		echo "It is a debian file."
+		sudo dpkg -i $filename
+		break
+		;;
+		tar.gz)
+		echo "It is a tar.gz file."
+		tar xzvf $filename
+		break
+		;;
+		tar.bz2)
+		echo "It is a tar.bz2 file."
+		tar xjf $filename
+		break
+		;;
+		*)
+		echo "This file system is not yet supported."
+		break
+		;;
+  		esac
+	done
+	printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
+	echo Program \file $filename is unzipped to /opt/$fname.
+	rm /opt/$fname/$filename
+}
+bincheck()
+{
+	cd /opt/$fname/$fname*
+	printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
+	echo Current directory: 
+	pwd
+	if [ -d /opt/$fname/$fname*/bin ] ; then
+	echo "bin folder exists."
+	setup=1
+	else
+	echo "bin folder doesn't exists."
+	exit
+	fi
+}
+makelink()
+{
+	ls -l
+	appname=`echo "$fname" | cut -d - -f1`
+	chmod +x /opt/$fname/$fname*/bin/$appname
+	ln -s /opt/$fname/$fname*/bin/$appname /usr/bin/$appname
+	printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
+	echo Installation success.
+	printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
+	echo Now you can run your program by using $appname \command in terminal.
+}
+ask_pkg_location()
+{
+	accesspkg
+	makedir
+	copypkg
+	unzippkg
+	bincheck
+	if [ $setup > 0 ] ; then
+	echo "Creating Links for You. :P" ;
+	printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
+	makelink
+	else
+	echo "Can't create link :( " ;
+	printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
+	fi
+}
+if [ $(id -u) -ne 0 ] ; then
+	echo "Please run as root" ; 
+	exit 1 ;
+else
+	echo "Running as root" ;
+	flag=1
+fi
+#Validating User
+if [ $flag > 0 ] ; then
+	echo "Script Will run" ;
+	ask_pkg_location
+else
+	echo "Can't Execute Shell Script" ;
+fi
