@@ -1,0 +1,53 @@
+#!/bin/sh
+#Author : Sakir Beg
+#Copyright (c) LazieDev
+#Script that automatically uninstalls the complete program from your system.
+COLUMNS=$(tput cols) 
+title="AutoApp UnInstaller v1.0" 
+printf "\n%*s\n" $(((${#title}+$COLUMNS)/2)) "$title"
+userinput="y"
+printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
+echo Enter Name of the Program to Remove.
+
+#Reading name of the program to be removed.
+read pname
+echo You have entered $pname.
+printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
+#Extracting the location where the program is present.
+loc=$(sudo find / -type d -name $pname*) > /dev/null 2>&1
+echo Path where the program resides: $loc
+#Temp storing location of the program to a file named path
+echo $loc > path
+content=$(cat path | cut -f1 -d " ")
+echo content of the temp before deleting \file is $content
+if [ "$content" != "$flag" ] ; then
+echo $content
+echo $content > path
+flag=$(cat path)
+echo content of the flag before deleting \file is $content
+echo 
+sudo rm -r $content > /dev/null 2>&1
+else
+break
+fi
+sudo rm /usr/bin/$pname
+printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
+echo $pname removed successfully
+printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
+echo "Wanna to check if $pname still exists or not!!(Y/N)" ;
+read PROCEED
+PROCEED="${PROCEED:-${userinput}}"
+printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
+if [ "${PROCEED}" != "n" ] ; then
+sudo find / -type d -name $pname* > /dev/null 2>&1
+echo $pname doesn\'t exist anywhere.
+exit
+else
+echo Thanks \for using AutoUninstaller :D
+exit
+fi 
+
+
+
+
+
